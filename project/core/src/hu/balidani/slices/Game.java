@@ -1,6 +1,7 @@
 package hu.balidani.slices;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
@@ -75,8 +76,6 @@ public class Game extends ApplicationAdapter {
 	@Override
 	public void render() {
 
-		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
-
 		// Filter for a slice
 		ArrayList<Vector3> sliceVertices = new ArrayList<Vector3>();
 
@@ -86,82 +85,119 @@ public class Game extends ApplicationAdapter {
 			}
 		}
 
-		// Convert list to float array
-
 		if (sliceVertices.size() >= 6) {
 
-			points = new float[sliceVertices.size() * 2];
-			int pointCount = 0;
-			
+			Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
+
+			shape.begin(ShapeType.Filled);
+			shape.identity();
+			shape.setColor(1, 1, 1, 1);
+
 			/*
-			 * Fancy drawing algorithm 
-			 * Slow, dumb implementation, obviously
+			 * Triangulating algorithm test Slow, dumb implementation, obviously
 			 */
 
 			// Select a starting point
-			Vector3 currentVertex = sliceVertices.remove(0);
+			Vector3 vertexA = sliceVertices.remove(0);
 
-			points[pointCount++] = currentVertex.x;
-			points[pointCount++] = currentVertex.y;
-			// System.out.printf("Start: %f %f\n", points[0], points[1]);
+			// Select the closest point to it
+			Vector3 vertexB = closestPoint(sliceVertices, vertexA);
 
 			// Go through all remaining points
-			while (!sliceVertices.isEmpty()) {
+			while (sliceVertices.size() > 1) {
 
-				Vector3 closestVertex = null;
-				float bestDistance = Float.MAX_VALUE;
-
-				// Find closest point
-				for (Vector3 otherVertex : sliceVertices) {
-					
-					if (otherVertex.equals(currentVertex)) {
-						continue;
-					}
-
-					// Compute 2d distance instead of built-in 3d
-					float distance = (float) (Math.pow(currentVertex.x - otherVertex.x,
-							2) + Math.pow(currentVertex.y - otherVertex.y, 2));
-
-					if (distance < bestDistance) {
-						bestDistance = distance;
-						closestVertex = otherVertex;
-					}
+				// Select a point C, such that (A, B, C) has the shortest perimeter
+				Vector3 vertexC = shortestPerimeter(sliceVertices, vertexA, vertexB);
+				
+				if (vertexC == null) {
+					System.out.println(sliceVertices.size());
+				} else {
+					triangle(shape, vertexA, vertexB, vertexC);
 				}
-
-				points[pointCount++] = closestVertex.x;
-				points[pointCount++] = closestVertex.y;
-
-				currentVertex = closestVertex;
-				sliceVertices.remove(currentVertex);
-				// System.out.printf("[%d]: %f %f\n", i, closestVertex.x, closestVertex.y);
+				
+				// Shift the vertices
+				vertexA = vertexB;
+				vertexB = vertexC;
+				sliceVertices.remove(vertexA);
 			}
 
-		}
-
-		if (points != null) {
-			
-			shape.begin(ShapeType.Line);
-			shape.identity();
-			shape.setColor(1, 1, 1, 1);
-			shape.polygon(points);
 			shape.end();
+
 		}
 
 		sliceZ -= sliceSpeed;
 		if (sliceZ < -sliceMax) {
 			sliceZ = sliceMax;
-			points = null;
 		}
-		
-//		shape.begin(ShapeType.Filled);
-//		shape.identity();
-//		shape.setColor(1, 1, 1, 1);
-//		shape.triangle(-0.5f, 0.0f, 0.0f, 0.5f, 0.5f, 0.0f);
-//		shape.end();
+
 	}
 
 	@Override
 	public void dispose() {
 		assets.dispose();
+	}
+
+	/*
+	 * Utility methods that will eventually be organized
+	 */
+
+	public void triangle(ShapeRenderer shape, Vector3 a, Vector3 b, Vector3 c) {
+		shape.triangle(a.x, a.y, b.x, b.y, c.x, c.y);
+	}
+
+	/**
+	 * @param a
+	 * @param b
+	 * @return squared distance between a and b, ignoring z dimension
+	 */
+	public float distance(Vector3 a, Vector3 b) {
+		return (float) (Math.pow(a.x - b.x, 2) + Math.pow(a.y - b.y, 2));
+	}
+
+	public Vector3 closestPoint(List<Vector3> vertices, Vector3 vertex) {
+
+		float bestDistance = Float.MAX_VALUE;
+		Vector3 bestVertex = null;
+
+		for (Vector3 otherVertex : vertices) {
+			if (otherVertex.equals(vertex)) {
+				continue;
+			}
+
+			// Compute 2d distance instead of built-in 3d
+			float dist = distance(vertex, otherVertex);
+
+			if (dist < bestDistance) {
+				bestDistance = dist;
+				bestVertex = otherVertex;
+			}
+		}
+
+		return bestVertex;
+	}
+
+	public Vector3 shortestPerimeter(List<Vector3> vertices, Vector3 a,
+			Vector3 b) {
+
+		float bestPerimeter = Float.MAX_VALUE;
+		float origDistance = distance(a, b);
+		Vector3 bestVertex = null;
+
+		for (Vector3 otherVertex : vertices) {
+			if (otherVertex.equals(a) || otherVertex.equals(b)) {
+				continue;
+			}
+
+			// Compute perimeter
+			float perimeter = origDistance + distance(b, otherVertex)
+					+ distance(otherVertex, a);
+			
+			if (perimeter < bestPerimeter) {
+				bestPerimeter = perimeter;
+				bestVertex = otherVertex;
+			}
+		}
+
+		return bestVertex;
 	}
 }
