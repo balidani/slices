@@ -14,6 +14,26 @@ public class Vertex {
 		this.z = z;
 	}
 	
+	public Vertex interpolate(Vertex b, float sliceZ) {
+		
+		Vertex diff = b.sub(this);
+		float ratio = (sliceZ - z) / diff.z;
+		
+		return this.add(diff.mul(ratio));
+	}
+	
+	public Vertex sub(Vertex v) {
+		return new Vertex(x - v.x, y - v.y, v.z - z);
+	}
+	
+	public Vertex add(Vertex v) {
+		return new Vertex(x + v.x, y + v.y, v.z + z);
+	}
+	
+	public Vertex mul(float f) {
+		return new Vertex(x * f, y * f, z * f);
+	}
+	
 	/**
 	 * @param v
 	 * @return squared distance between this vertex and v, ignoring the z dimension
@@ -47,5 +67,10 @@ public class Vertex {
 		}
 
 		return bestVertex;
+	}
+	
+	@Override
+	public String toString() {
+		return String.format("(%f %f %f)", x, y, z);
 	}
 }
