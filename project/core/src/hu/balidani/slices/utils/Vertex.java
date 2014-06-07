@@ -14,14 +14,6 @@ public class Vertex {
 		this.z = z;
 	}
 	
-	public Vertex interpolate(Vertex b, float sliceZ) {
-		
-		Vertex diff = b.sub(this);
-		float ratio = (sliceZ - z) / diff.z;
-		
-		return this.add(diff.mul(ratio));
-	}
-	
 	public Vertex sub(Vertex v) {
 		return new Vertex(x - v.x, y - v.y, v.z - z);
 	}

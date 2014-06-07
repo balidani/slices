@@ -1,16 +1,21 @@
 package hu.balidani.slices;
 
+import hu.balidani.slices.utils.Edge;
 import hu.balidani.slices.utils.Face;
 import hu.balidani.slices.utils.Vertex;
 
 import java.util.ArrayList;
+import java.util.Collection;
 
 import com.badlogic.gdx.ApplicationAdapter;
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.assets.AssetManager;
+import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Mesh;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g3d.Model;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer.ShapeType;
 
 public class Game extends ApplicationAdapter {
 
@@ -27,7 +32,7 @@ public class Game extends ApplicationAdapter {
 	@Override
 	public void create() {
 
-		String file = "icosphere.g3db";
+		String file = "sphere.g3db";
 
 		// Load assets
 		assets = new AssetManager();
@@ -80,7 +85,7 @@ public class Game extends ApplicationAdapter {
 		System.out.println("Index size: " + faces.size());
 
 		// Set up the camera and shape renderer
-		camera = new OrthographicCamera(2f, 2f);
+		camera = new OrthographicCamera(3f, 3f);
 		camera.translate(0f, 0f);
 		camera.update();
 
@@ -91,37 +96,55 @@ public class Game extends ApplicationAdapter {
 		sliceZ = sliceMax;
 		epsilonZ = 0.01f;
 		sliceSpeed = 0.005f;
-		
-		sliceZ = 0.1f;
 	}
 
 	@Override
 	public void render() {
 		
-		ArrayList<Face> faceGroup = null;
+		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
+		
+		Collection<Edge> edgeGroup = null;
 		
 		for (Face face : faces) {
 			if (face.intersectsZ(sliceZ)) {
-				faceGroup = face.findNeighbors(faces, sliceZ);
+				edgeGroup = face.findNeighbors(faces, sliceZ);
+				
+				// TODO: do not break here, multiple edge groups may exist
 				break;
 			}
 		}
 		
-		if (faceGroup == null) {
+		if (edgeGroup == null) {
 			moveSlice();
 			return;
 		}
 		
-		ArrayList<Vertex> slice = null;
+		ArrayList<Vertex> slice = new ArrayList<Vertex>();
 		
-		System.out.println(faceGroup.size());
-		for (Face face : faceGroup) {
-			System.out.println(face);
+		for (Edge edge : edgeGroup) {
+			Vertex v = edge.interpolate(sliceZ);
+			slice.add(v);
 		}
 		
-		System.exit(0);
+		for (int i = 0; i < slice.size(); i++) {
+
+			Vertex a = slice.get(i);
+			Vertex b;
+			
+			if (i < slice.size() - 1) {
+				b = slice.get(i + 1);
+			} else {
+				b = slice.get(0);
+			}
+			
+			shape.begin(ShapeType.Line);
+			shape.identity();
+			shape.setColor(1, 1, 1, 1);
+			shape.line(a.x, a.y, b.x, b.y);
+			shape.end();
+		}
 		
-		
+		moveSlice();
 	}
 
 	@Override
@@ -140,11 +163,4 @@ public class Game extends ApplicationAdapter {
 			sliceZ = sliceMax;
 		}
 	}
-
-	//	Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
-	//	shape.begin(ShapeType.Filled);
-	//	shape.identity();
-	//	shape.setColor(1, 1, 1, 1);
-	//	shape.triangle(a.x, a.y, b.x, b.y, c.x, c.y);		
-	//	shape.end();
 }
