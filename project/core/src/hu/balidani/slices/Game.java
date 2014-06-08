@@ -2,6 +2,7 @@ package hu.balidani.slices;
 
 import hu.balidani.slices.utils.Edge;
 import hu.balidani.slices.utils.Face;
+import hu.balidani.slices.utils.FacePair;
 import hu.balidani.slices.utils.Vertex;
 
 import java.util.ArrayList;
@@ -30,7 +31,7 @@ public class Game extends ApplicationAdapter {
 	@Override
 	public void create() {
 
-		String file = "mug.g3db";
+		String file = "mug2.g3db";
 
 		// Load assets
 		assets = new AssetManager();
@@ -76,7 +77,7 @@ public class Game extends ApplicationAdapter {
 			Vertex vertexC = vertices.get(c);
 			
 			// Order intentional, due to 3d to 2d conversion later on
-			faces.add(new Face(vertexA, vertexB, vertexC));
+			faces.add(new Face(i, vertexA, vertexB, vertexC));
 		}
 
 		System.out.println("Vertex size: " + vertices.size());
@@ -93,6 +94,8 @@ public class Game extends ApplicationAdapter {
 		sliceMax = 1.25f;
 		sliceZ = sliceMax;
 		sliceSpeed = 0.005f;
+		
+		sliceZ = 0.0f;
 	}
 
 	@Override
@@ -100,23 +103,31 @@ public class Game extends ApplicationAdapter {
 		
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
 		
-		ArrayList<Face> facesSeen = new ArrayList<Face>();
+		ArrayList<FacePair> facePairs = new ArrayList<FacePair>();
 		
 		for (Face face : faces) {
-			if (facesSeen.contains(face)) {
+			
+			// Check if face is contained by any seen pair
+			// This should be much more efficient
+			boolean faceSeen = false;
+			for (FacePair facePair : facePairs) {
+				if (facePair.contains(face)) {
+					faceSeen = true;
+					break;
+				}
+			}
+			if (faceSeen) {
 				continue;
 			}
 			
 			if (face.intersectsZ(sliceZ)) {
 				ArrayList<Edge> edgeGroup = new ArrayList<Edge>();
-				face.findNeighbors(faces, sliceZ, facesSeen, edgeGroup);
+				face.findNeighbors(faces, sliceZ, facePairs, edgeGroup);
 
 				if (edgeGroup == null || edgeGroup.size() == 0) {
 					moveSlice();
 					return;
 				}
-				
-				// System.out.println("Found edge group, size: " + edgeGroup.size() + ", faces seen size: " + facesSeen.size());
 				
 				// Render edge group
 				ArrayList<Vertex> slice = new ArrayList<Vertex>();
@@ -137,6 +148,12 @@ public class Game extends ApplicationAdapter {
 						b = slice.get(0);
 					}
 					
+//					shape.begin(ShapeType.Filled);
+//					shape.identity();
+//					shape.setColor(1, 1, 1, 1);
+//					shape.rect(a.x - 0.02f, a.y - 0.02f, 0.04f, 0.04f);
+//					shape.end();
+//					
 					shape.begin(ShapeType.Line);
 					shape.identity();
 					shape.setColor(1, 1, 1, 1);

@@ -4,12 +4,16 @@ import java.util.ArrayList;
 
 public class Face {
 	
+	public int id;
+	
 	// Top: a, Middle: b, Bottom: c,
 	public Vertex a;
 	public Vertex b;
 	public Vertex c;
 
-	public Face(Vertex a, Vertex b, Vertex c) {
+	public Face(int id, Vertex a, Vertex b, Vertex c) {
+		
+		this.id = id;
 		
 		this.a = Face.max(a, b, c);
 		this.b = Face.mid(a, b, c);
@@ -40,19 +44,32 @@ public class Face {
 		return aAbove + bAbove + cAbove;
 	}
 	
-	public void findNeighbors(ArrayList<Face> faces, float z, ArrayList<Face> facesSeen, ArrayList<Edge> results) {
+	public void findNeighbors(ArrayList<Face> faces, float z, ArrayList<FacePair> pairs, ArrayList<Edge> results) {
 		
 		for (Face face : faces) {
-			if (facesSeen.contains(face)) {
+			
+			if (face.equals(this)) {
+				continue;
+			}
+			
+			FacePair pair = new FacePair(this, face);
+			if (pairs.contains(pair)) {
 				continue;
 			}
 			
 			Edge edge = this.commonEdge(face);
-			if (edge != null && face.intersectsZ(z)) {
+			
+			if (edge == null) {
+				continue;
+			}
+			
+			if (face.intersectsZ(z)) {
 				
-				facesSeen.add(face);
 				results.add(edge);
-				face.findNeighbors(faces, z, facesSeen, results);
+				pairs.add(pair);
+				
+				face.findNeighbors(faces, z, pairs, results);
+				break;
 			}
 		}
 	}
@@ -94,7 +111,8 @@ public class Face {
 	
 	@Override
 	public String toString() {
-		return String.format("%s %s %s", a, b, c);
+		// return String.format("[%d] %s %s %s", id, a, b, c);
+		return String.format("Face(%d)", id);
 	}
 	
 	public static Vertex min(Vertex... vertices) {
