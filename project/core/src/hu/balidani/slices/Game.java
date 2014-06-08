@@ -5,7 +5,6 @@ import hu.balidani.slices.utils.Face;
 import hu.balidani.slices.utils.Vertex;
 
 import java.util.ArrayList;
-import java.util.Collection;
 
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
@@ -27,12 +26,11 @@ public class Game extends ApplicationAdapter {
 	ArrayList<Face> faces;
 
 	float sliceZ, sliceMin, sliceMax, sliceSpeed;
-	float epsilonZ;
 
 	@Override
 	public void create() {
 
-		String file = "sphere.g3db";
+		String file = "mug.g3db";
 
 		// Load assets
 		assets = new AssetManager();
@@ -94,7 +92,6 @@ public class Game extends ApplicationAdapter {
 
 		sliceMax = 1.25f;
 		sliceZ = sliceMax;
-		epsilonZ = 0.01f;
 		sliceSpeed = 0.005f;
 	}
 
@@ -103,45 +100,50 @@ public class Game extends ApplicationAdapter {
 		
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
 		
-		Collection<Edge> edgeGroup = null;
+		ArrayList<Face> facesSeen = new ArrayList<Face>();
 		
 		for (Face face : faces) {
+			if (facesSeen.contains(face)) {
+				continue;
+			}
+			
 			if (face.intersectsZ(sliceZ)) {
-				edgeGroup = face.findNeighbors(faces, sliceZ);
-				
-				// TODO: do not break here, multiple edge groups may exist
-				break;
-			}
-		}
-		
-		if (edgeGroup == null) {
-			moveSlice();
-			return;
-		}
-		
-		ArrayList<Vertex> slice = new ArrayList<Vertex>();
-		
-		for (Edge edge : edgeGroup) {
-			Vertex v = edge.interpolate(sliceZ);
-			slice.add(v);
-		}
-		
-		for (int i = 0; i < slice.size(); i++) {
+				ArrayList<Edge> edgeGroup = new ArrayList<Edge>();
+				face.findNeighbors(faces, sliceZ, facesSeen, edgeGroup);
 
-			Vertex a = slice.get(i);
-			Vertex b;
-			
-			if (i < slice.size() - 1) {
-				b = slice.get(i + 1);
-			} else {
-				b = slice.get(0);
+				if (edgeGroup == null || edgeGroup.size() == 0) {
+					moveSlice();
+					return;
+				}
+				
+				// System.out.println("Found edge group, size: " + edgeGroup.size() + ", faces seen size: " + facesSeen.size());
+				
+				// Render edge group
+				ArrayList<Vertex> slice = new ArrayList<Vertex>();
+				
+				for (Edge edge : edgeGroup) {
+					Vertex v = edge.interpolate(sliceZ);
+					slice.add(v);
+				}
+				
+				for (int i = 0; i < slice.size(); i++) {
+
+					Vertex a = slice.get(i);
+					Vertex b;
+					
+					if (i < slice.size() - 1) {
+						b = slice.get(i + 1);
+					} else {
+						b = slice.get(0);
+					}
+					
+					shape.begin(ShapeType.Line);
+					shape.identity();
+					shape.setColor(1, 1, 1, 1);
+					shape.line(a.x, a.y, b.x, b.y);
+					shape.end();
+				}
 			}
-			
-			shape.begin(ShapeType.Line);
-			shape.identity();
-			shape.setColor(1, 1, 1, 1);
-			shape.line(a.x, a.y, b.x, b.y);
-			shape.end();
 		}
 		
 		moveSlice();

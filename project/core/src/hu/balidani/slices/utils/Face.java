@@ -40,22 +40,7 @@ public class Face {
 		return aAbove + bAbove + cAbove;
 	}
 	
-	/**
-	 * 
-	 * @param faces - list of all faces
-	 * @param z - the z coordinate of the slice
-	 * @return - list of neighboring faces
-	 */
-	public ArrayList<Edge> findNeighbors(ArrayList<Face> faces, float z) {
-
-		ArrayList<Edge> results = new ArrayList<Edge>();
-		ArrayList<Face> facesSeen = new ArrayList<Face>();
-		
-		findNeighbors(faces, z, facesSeen, results);
-		return results;
-	}
-	
-	private void findNeighbors(ArrayList<Face> faces, float z, ArrayList<Face> facesSeen, ArrayList<Edge> results) {
+	public void findNeighbors(ArrayList<Face> faces, float z, ArrayList<Face> facesSeen, ArrayList<Edge> results) {
 		
 		for (Face face : faces) {
 			if (facesSeen.contains(face)) {
