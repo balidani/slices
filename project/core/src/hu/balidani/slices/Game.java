@@ -107,6 +107,7 @@ public class Game extends ApplicationAdapter {
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
 		
 		ArrayList<FacePair> facePairs = new ArrayList<FacePair>();
+		ArrayList<ArrayList<Vertex>> slices = new ArrayList<ArrayList<Vertex>>();
 		
 		for (Face face : faces) {
 			
@@ -132,7 +133,7 @@ public class Game extends ApplicationAdapter {
 					return;
 				}
 				
-				// Render edge group
+				// Process edge group into a slice
 				ArrayList<Vertex> slice = new ArrayList<Vertex>();
 				
 				for (Line edge : edgeGroup) {
@@ -148,10 +149,35 @@ public class Game extends ApplicationAdapter {
 					slice.add(v);
 				}
 				
-				edgeCut(slice);
+				slices.add(slice);
 			}
 		}
 		
+		// Determine hollowness
+		ArrayList<Boolean> hollowness = new ArrayList<Boolean>();
+		
+		for (ArrayList<Vertex> slice : slices) {
+
+			// Determine if the slice is a "hollow" part or not
+			boolean hollow = isHollow(slice, slices);
+			hollowness.add(hollow);
+		}
+
+		// Render the non-hollow slices first
+		for (int i = 0; i < slices.size(); ++i) {
+			if (!hollowness.get(i)) {
+				earClipping(slices.get(i), false);
+			}
+		}
+
+		// Render the solid slices after that
+		for (int i = 0; i < slices.size(); ++i) {
+			if (hollowness.get(i)) {
+				earClipping(slices.get(i), true);
+			}
+		}
+		
+		// Move the slice
 		moveSlice();
 	}
 
@@ -172,37 +198,12 @@ public class Game extends ApplicationAdapter {
 		}
 	}
 	
-	public void edgeCut(ArrayList<Vertex> slice) {
+	public void earClipping(ArrayList<Vertex> slice, boolean hollow) {
 
 		ArrayList<Vertex> originalSlice = new ArrayList<Vertex>();
 		
 		for (Vertex vertex : slice) {
 			originalSlice.add(new Vertex(vertex));
-		}
-		
-		// Draw the frame for debugging
-		for (int i = 0; i < slice.size(); i++) {
-
-			Vertex a = slice.get(i);
-			Vertex b;
-			
-			if (i < slice.size() - 1) {
-				b = slice.get(i + 1);
-			} else {
-				b = slice.get(0);
-			}
-			
-			shape.begin(ShapeType.Filled);
-			shape.identity();
-			shape.setColor(0, 1, 0, 1);
-			shape.rect(a.x - 0.01f, a.y - 0.01f, 0.02f, 0.02f);
-			shape.end();
-
-			shape.begin(ShapeType.Line);
-			shape.identity();
-			shape.setColor(1, 1, 1, 1);
-			shape.line(a.x, a.y, b.x, b.y);
-			shape.end();
 		}
 		
 		while (slice.size() > 2) {
@@ -267,16 +268,14 @@ public class Game extends ApplicationAdapter {
 				
 				shape.begin(ShapeType.Filled);
 				shape.identity();
-				shape.setColor(0, 0, 1, 1);
+				
+				if (hollow) {
+					shape.setColor(0, 0, 0, 1);
+				} else {
+					shape.setColor(0, 0, 1, 1);
+				}
+				
 				shape.triangle(before.x, before.y, ear.x, ear.y, after.x, after.y);
-				shape.end();
-
-				shape.begin(ShapeType.Line);
-				shape.identity();
-				shape.setColor(1, 1, 1, 1);
-				shape.line(before.x, before.y, ear.x, ear.y);
-				shape.line(ear.x, ear.y, after.x, after.y);
-				shape.line(before.x, before.y, after.x, after.y);
 				shape.end();
 				
 				foundEar = true;
@@ -289,6 +288,63 @@ public class Game extends ApplicationAdapter {
 				// System.out.println("Didn't find any ears");
 				break;
 			}
+		}
+	}
+
+	private boolean isHollow(ArrayList<Vertex> slice,
+			ArrayList<ArrayList<Vertex>> slices) {
+
+		Vertex start = slice.get(0);
+		Vertex infinity = new Vertex(3e5f, 7e5f);
+		Line check = new Line(start, infinity);
+		
+		int intersectionCount = 0;
+		
+		// This is N^2 complexity, and it must not be done at runtime in the future
+		for (ArrayList<Vertex> otherSlice : slices) {
+			if (otherSlice.equals(slice)) {
+				continue;
+			}
+			
+			for (int j = 0; j < otherSlice.size(); ++j) {
+				Vertex a = otherSlice.get(j);
+				Vertex b = j < otherSlice.size() - 1 ? otherSlice.get(j + 1) : otherSlice.get(0);
+
+				Line edge = new Line(a, b);
+				
+				if (check.intersects(edge, true)) {
+					intersectionCount++;
+				}
+			}
+		}
+		
+		return (intersectionCount % 2 != 0);
+	}
+	
+	public void renderOutline(ArrayList<Vertex> slice) {
+		// Draw the frame for debugging
+		for (int i = 0; i < slice.size(); i++) {
+
+			Vertex a = slice.get(i);
+			Vertex b;
+			
+			if (i < slice.size() - 1) {
+				b = slice.get(i + 1);
+			} else {
+				b = slice.get(0);
+			}
+			
+//			shape.begin(ShapeType.Filled);
+//			shape.identity();
+//			shape.setColor(0, 1, 0, 1);
+//			shape.rect(a.x - 0.01f, a.y - 0.01f, 0.02f, 0.02f);
+//			shape.end();
+
+			shape.begin(ShapeType.Line);
+			shape.identity();
+			shape.setColor(1, 1, 1, 1);
+			shape.line(a.x, a.y, b.x, b.y);
+			shape.end();
 		}
 	}
 }
