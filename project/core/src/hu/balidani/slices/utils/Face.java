@@ -44,7 +44,7 @@ public class Face {
 		return aAbove + bAbove + cAbove;
 	}
 	
-	public void findNeighbors(ArrayList<Face> faces, float z, ArrayList<FacePair> pairs, ArrayList<Edge> results) {
+	public void findNeighbors(ArrayList<Face> faces, float z, ArrayList<FacePair> pairs, ArrayList<Line> results) {
 		
 		for (Face face : faces) {
 			
@@ -57,7 +57,7 @@ public class Face {
 				continue;
 			}
 			
-			Edge edge = this.commonEdge(face);
+			Line edge = this.commonEdge(face);
 			
 			if (edge == null) {
 				continue;
@@ -74,7 +74,7 @@ public class Face {
 		}
 	}
 
-	public Edge commonEdge(Face f) {
+	public Line commonEdge(Face f) {
 		
 		Vertex v1 = null;
 		Vertex v2 = null;
@@ -97,7 +97,7 @@ public class Face {
 		
 		// v1 is always supposed to be the greater value
 		// which means it's closer to the bottom (z=1)
-		return new Edge(v1, v2);
+		return new Line(v1, v2);
 	}
 	
 	/**

@@ -14,6 +14,17 @@ public class Vertex {
 		this.z = z;
 	}
 	
+	public Vertex(float x, float y) {
+		this.x = x;
+		this.y = y;
+	}
+	
+	public Vertex(Vertex vertex) {
+		this.x = vertex.x;
+		this.y = vertex.y;
+		this.z = vertex.z;
+	}
+
 	public Vertex sub(Vertex v) {
 		return new Vertex(x - v.x, y - v.y, v.z - z);
 	}
@@ -64,5 +75,9 @@ public class Vertex {
 	@Override
 	public String toString() {
 		return String.format("(%f %f %f)", x, y, z);
+	}
+
+	public boolean resembles(Vertex last) {
+		return (Math.abs(last.x - this.x) < 0.0001f) && (Math.abs(last.y - this.y) < 0.0001f);
 	}
 }

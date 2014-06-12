@@ -1,12 +1,11 @@
 package hu.balidani.slices;
 
-import hu.balidani.slices.utils.Edge;
 import hu.balidani.slices.utils.Face;
 import hu.balidani.slices.utils.FacePair;
+import hu.balidani.slices.utils.Line;
 import hu.balidani.slices.utils.Vertex;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
@@ -32,7 +31,7 @@ public class Game extends ApplicationAdapter {
 	@Override
 	public void create() {
 
-		String file = "letter_g.g3db";
+		String file = "mug.g3db";
 
 		// Load assets
 		assets = new AssetManager();
@@ -125,7 +124,7 @@ public class Game extends ApplicationAdapter {
 			}
 			
 			if (face.intersectsZ(sliceZ)) {
-				ArrayList<Edge> edgeGroup = new ArrayList<Edge>();
+				ArrayList<Line> edgeGroup = new ArrayList<Line>();
 				face.findNeighbors(faces, sliceZ, facePairs, edgeGroup);
 
 				if (edgeGroup == null || edgeGroup.size() == 0) {
@@ -136,8 +135,16 @@ public class Game extends ApplicationAdapter {
 				// Render edge group
 				ArrayList<Vertex> slice = new ArrayList<Vertex>();
 				
-				for (Edge edge : edgeGroup) {
+				for (Line edge : edgeGroup) {
 					Vertex v = edge.interpolate(sliceZ);
+					
+					// Check for duplicate
+					if (!slice.isEmpty()) {
+						Vertex last = slice.get(slice.size() - 1);
+						if (v.resembles(last)) {
+							continue;
+						}
+					}
 					slice.add(v);
 				}
 				
@@ -167,6 +174,12 @@ public class Game extends ApplicationAdapter {
 	
 	public void edgeCut(ArrayList<Vertex> slice) {
 
+		ArrayList<Vertex> originalSlice = new ArrayList<Vertex>();
+		
+		for (Vertex vertex : slice) {
+			originalSlice.add(new Vertex(vertex));
+		}
+		
 		// Draw the frame for debugging
 		for (int i = 0; i < slice.size(); i++) {
 
@@ -192,17 +205,90 @@ public class Game extends ApplicationAdapter {
 			shape.end();
 		}
 		
-		
-		Vertex vertex;
-		for (int i = 0; i < slice.size(); i++) {
+		while (slice.size() > 2) {
+			
+			Vertex ear = null;
+			boolean foundEar = false;
+			
+			for (int i = 0; i < slice.size(); ++i) {
+	
+				Vertex before = i > 0 ? slice.get(i - 1) : slice.get(slice.size() - 1);
+				ear = slice.get(i);
+				Vertex after = i < slice.size() - 1 ? slice.get(i + 1) : slice.get(0);
+				
+				// Check if before -- after is a real diagonal
+				Line diagonal = new Line(before, after);
+				boolean isDiagonal = true;
+				
+				// To do that, we have to see if it intersects any of the edges of our _original_ slice
+				for (int j = 0; j < originalSlice.size(); ++j) {
+					Vertex a = originalSlice.get(j);
+					Vertex b = j < originalSlice.size() - 1 ? originalSlice.get(j + 1) : originalSlice.get(0);
+					
+					Line edge = new Line(a, b);
+					
+					if (diagonal.intersects(edge, false)) {
+						isDiagonal = false;
+						break;
+					}
+				}
+	
+				if (!isDiagonal) {
+					// Intersects other edges,  not a diagonal
+					continue; 
+				}
+				
+				// If the line is a real diagonal, we have to check if it's inside the slice or not
+				// To do that, we have to launch a line from a point to infinity, and count the times it intersects the slice
+				
+				// Take the center of the diagonal
+				Vertex center = diagonal.center();
+				Vertex infinity = new Vertex(3e5f, 7e5f);
+				Line check = new Line(center, infinity);
+				int intersectionCount = 0;
+				
+				for (int j = 0; j < originalSlice.size(); ++j) {
+					Vertex a = originalSlice.get(j);
+					Vertex b = j < originalSlice.size() - 1 ? originalSlice.get(j + 1) : originalSlice.get(0);
+	
+					Line edge = new Line(a, b);
+					
+					if (check.intersects(edge, true)) {
+						intersectionCount++;
+					}
+				}
+				
+				if (intersectionCount % 2 == 0) {
+					// Not a real diagonal, it's outside of the slice
+					continue;
+				}
+				
+				// Found an ear, render and cut
+				
+				shape.begin(ShapeType.Filled);
+				shape.identity();
+				shape.setColor(0, 0, 1, 1);
+				shape.triangle(before.x, before.y, ear.x, ear.y, after.x, after.y);
+				shape.end();
 
-			Vertex before = i > 0 ? slice.get(i - 1) : slice.get(slice.size() - 1); 
-			vertex = slice.get(i);
-			Vertex after = i < slice.size() - 1 ? slice.get(i + 1) : slice.get(0);
+				shape.begin(ShapeType.Line);
+				shape.identity();
+				shape.setColor(1, 1, 1, 1);
+				shape.line(before.x, before.y, ear.x, ear.y);
+				shape.line(ear.x, ear.y, after.x, after.y);
+				shape.line(before.x, before.y, after.x, after.y);
+				shape.end();
+				
+				foundEar = true;
+				break;
+			}
 			
-			// Check if before -- after is a real diagonal
-			
-			
+			if (foundEar) {
+				slice.remove(ear);
+			} else {
+				// System.out.println("Didn't find any ears");
+				break;
+			}
 		}
 	}
 }
