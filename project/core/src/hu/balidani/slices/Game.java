@@ -6,6 +6,7 @@ import hu.balidani.slices.utils.FacePair;
 import hu.balidani.slices.utils.Vertex;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
@@ -31,7 +32,7 @@ public class Game extends ApplicationAdapter {
 	@Override
 	public void create() {
 
-		String file = "mug2.g3db";
+		String file = "letter_g.g3db";
 
 		// Load assets
 		assets = new AssetManager();
@@ -76,6 +77,11 @@ public class Game extends ApplicationAdapter {
 			Vertex vertexB = vertices.get(b);
 			Vertex vertexC = vertices.get(c);
 			
+			// Skip flat faces
+			if (Math.abs(vertexA.z - vertexB.z) < 0.001f && Math.abs(vertexB.z - vertexC.z) < 0.001f) {
+				continue;
+			}
+			
 			// Order intentional, due to 3d to 2d conversion later on
 			faces.add(new Face(i, vertexA, vertexB, vertexC));
 		}
@@ -91,11 +97,9 @@ public class Game extends ApplicationAdapter {
 		shape = new ShapeRenderer();
 		shape.setProjectionMatrix(camera.combined);
 
-		sliceMax = 1.25f;
+		sliceMax = 1.0f;
 		sliceZ = sliceMax;
 		sliceSpeed = 0.005f;
-		
-		sliceZ = 0.0f;
 	}
 
 	@Override
@@ -137,29 +141,7 @@ public class Game extends ApplicationAdapter {
 					slice.add(v);
 				}
 				
-				for (int i = 0; i < slice.size(); i++) {
-
-					Vertex a = slice.get(i);
-					Vertex b;
-					
-					if (i < slice.size() - 1) {
-						b = slice.get(i + 1);
-					} else {
-						b = slice.get(0);
-					}
-					
-//					shape.begin(ShapeType.Filled);
-//					shape.identity();
-//					shape.setColor(1, 1, 1, 1);
-//					shape.rect(a.x - 0.02f, a.y - 0.02f, 0.04f, 0.04f);
-//					shape.end();
-//					
-					shape.begin(ShapeType.Line);
-					shape.identity();
-					shape.setColor(1, 1, 1, 1);
-					shape.line(a.x, a.y, b.x, b.y);
-					shape.end();
-				}
+				edgeCut(slice);
 			}
 		}
 		
@@ -180,6 +162,47 @@ public class Game extends ApplicationAdapter {
 		sliceZ -= sliceSpeed;
 		if (sliceZ < -sliceMax) {
 			sliceZ = sliceMax;
+		}
+	}
+	
+	public void edgeCut(ArrayList<Vertex> slice) {
+
+		// Draw the frame for debugging
+		for (int i = 0; i < slice.size(); i++) {
+
+			Vertex a = slice.get(i);
+			Vertex b;
+			
+			if (i < slice.size() - 1) {
+				b = slice.get(i + 1);
+			} else {
+				b = slice.get(0);
+			}
+			
+			shape.begin(ShapeType.Filled);
+			shape.identity();
+			shape.setColor(0, 1, 0, 1);
+			shape.rect(a.x - 0.01f, a.y - 0.01f, 0.02f, 0.02f);
+			shape.end();
+
+			shape.begin(ShapeType.Line);
+			shape.identity();
+			shape.setColor(1, 1, 1, 1);
+			shape.line(a.x, a.y, b.x, b.y);
+			shape.end();
+		}
+		
+		
+		Vertex vertex;
+		for (int i = 0; i < slice.size(); i++) {
+
+			Vertex before = i > 0 ? slice.get(i - 1) : slice.get(slice.size() - 1); 
+			vertex = slice.get(i);
+			Vertex after = i < slice.size() - 1 ? slice.get(i + 1) : slice.get(0);
+			
+			// Check if before -- after is a real diagonal
+			
+			
 		}
 	}
 }
