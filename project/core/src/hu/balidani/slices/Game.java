@@ -100,7 +100,7 @@ public class Game extends ApplicationAdapter {
 
 		sliceMax = 1.0f;
 		sliceZ = sliceMax;
-		sliceSpeed = 0.005f;
+		sliceSpeed = 0.01f;
 	}
 
 	@Override
@@ -344,7 +344,15 @@ public class Game extends ApplicationAdapter {
 			ArrayList<ArrayList<Vertex>> slices) {
 
 		Vertex start = slice.get(0);
-		Vertex infinity = new Vertex(3e5f, 7e5f);
+
+		// Find the highest point for the starting point
+		for (Vertex vertex : slice) {
+			if (vertex.y > start.y){
+				start = vertex;
+			}
+		}
+		
+		Vertex infinity = new Vertex(1e5f, 7e5f);
 		Line check = new Line(start, infinity);
 
 		int intersectionCount = 0;
