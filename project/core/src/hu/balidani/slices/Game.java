@@ -164,6 +164,18 @@ public class Game extends ApplicationAdapter {
 					slice.add(v);
 				}
 				
+				// Final step of vertex optimization for between the beginning and end of the slice
+				if (slice.size() > 2) {
+					
+					Vertex last1 = slice.get(slice.size() - 1);
+					Vertex first1 = slice.get(0);
+					Vertex first2 = slice.get(1);
+					
+					if (first2.pointTo(last1).resembles(first2.pointTo(first1))) {
+						slice.remove(first1);
+					}
+				}
+
 				slices.add(slice);
 			}
 		}
@@ -292,6 +304,14 @@ public class Game extends ApplicationAdapter {
 				
 				shape.triangle(before.x, before.y, ear.x, ear.y, after.x, after.y);
 				shape.end();
+
+//				shape.begin(ShapeType.Line);
+//				shape.identity();
+//				shape.setColor(1, 1, 1, 1);
+//				shape.line(before.x, before.y, ear.x, ear.y);
+//				shape.line(ear.x, ear.y, after.x, after.y);
+//				shape.line(before.x, before.y, after.x, after.y);
+//				shape.end();
 				
 				foundEar = true;
 				break;
@@ -300,7 +320,7 @@ public class Game extends ApplicationAdapter {
 			if (foundEar) {
 				slice.remove(ear);
 			} else {
-				// System.out.println("No ear found, " + sliceZ);
+				System.out.println("No ear found, " + sliceZ);
 				break;
 			}
 		}
@@ -349,11 +369,11 @@ public class Game extends ApplicationAdapter {
 				b = slice.get(0);
 			}
 			
-//			shape.begin(ShapeType.Filled);
-//			shape.identity();
-//			shape.setColor(0, 1, 0, 1);
-//			shape.rect(a.x - 0.01f, a.y - 0.01f, 0.02f, 0.02f);
-//			shape.end();
+			shape.begin(ShapeType.Filled);
+			shape.identity();
+			shape.setColor(0, 1, 0, 1);
+			shape.rect(a.x - 0.01f, a.y - 0.01f, 0.02f, 0.02f);
+			shape.end();
 
 			shape.begin(ShapeType.Line);
 			shape.identity();

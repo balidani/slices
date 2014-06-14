@@ -80,8 +80,8 @@ public class Vertex {
 	}
 
 	public boolean resembles(Vertex last) {
-		return (Math.abs(last.x - this.x) < 0.004f)
-				&& (Math.abs(last.y - this.y) < 0.004f);
+		return (Math.abs(last.x - this.x) < 0.001f)
+				&& (Math.abs(last.y - this.y) < 0.001f);
 	}
 
 	public Vertex pointTo(Vertex v) {
