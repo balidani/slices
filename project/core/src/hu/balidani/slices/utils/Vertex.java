@@ -7,18 +7,18 @@ public class Vertex {
 	public float x;
 	public float y;
 	public float z;
-	
+
 	public Vertex(float x, float y, float z) {
 		this.x = x;
 		this.y = y;
 		this.z = z;
 	}
-	
+
 	public Vertex(float x, float y) {
 		this.x = x;
 		this.y = y;
 	}
-	
+
 	public Vertex(Vertex vertex) {
 		this.x = vertex.x;
 		this.y = vertex.y;
@@ -28,18 +28,19 @@ public class Vertex {
 	public Vertex sub(Vertex v) {
 		return new Vertex(x - v.x, y - v.y, v.z - z);
 	}
-	
+
 	public Vertex add(Vertex v) {
 		return new Vertex(x + v.x, y + v.y, v.z + z);
 	}
-	
+
 	public Vertex mul(float f) {
 		return new Vertex(x * f, y * f, z * f);
 	}
-	
+
 	/**
 	 * @param v
-	 * @return squared distance between this vertex and v, ignoring the z dimension
+	 * @return squared distance between this vertex and v, ignoring the z
+	 *         dimension
 	 */
 	public float distanceTo(Vertex v) {
 		return (float) (Math.pow(v.x - x, 2) + Math.pow(v.y - y, 2));
@@ -47,7 +48,8 @@ public class Vertex {
 
 	/**
 	 * 
-	 * @param vertices - list of vertices to search in
+	 * @param vertices
+	 *            - list of vertices to search in
 	 * @return the closest point to this vertex
 	 */
 	public Vertex closestPoint(List<Vertex> vertices) {
@@ -71,13 +73,24 @@ public class Vertex {
 
 		return bestVertex;
 	}
-	
+
 	@Override
 	public String toString() {
 		return String.format("(%f %f %f)", x, y, z);
 	}
 
 	public boolean resembles(Vertex last) {
-		return (Math.abs(last.x - this.x) < 0.0001f) && (Math.abs(last.y - this.y) < 0.0001f);
+		return (Math.abs(last.x - this.x) < 0.004f)
+				&& (Math.abs(last.y - this.y) < 0.004f);
+	}
+
+	public Vertex pointTo(Vertex v) {
+		float x = v.x - this.x;
+		float y = v.y - this.y;
+
+		// Transform to eigenvector
+		float s = (float) Math.sqrt(x * x + y * y);
+
+		return new Vertex(x/s, y/s);
 	}
 }

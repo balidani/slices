@@ -98,7 +98,7 @@ public class Game extends ApplicationAdapter {
 
 		sliceMax = 1.0f;
 		sliceZ = sliceMax;
-		sliceSpeed = 0.005f;
+		sliceSpeed = 0.01f;
 	}
 
 	@Override
@@ -146,6 +146,21 @@ public class Game extends ApplicationAdapter {
 							continue;
 						}
 					}
+					
+					// Optimization (and a bug fix):
+					// If the new vertex is the continuation of the previous two, 
+					// simply remove the last element before adding the new
+					
+					if (slice.size() > 1) {
+						// Get the last two vertices
+						Vertex last1 = slice.get(slice.size() - 1);
+						Vertex last2 = slice.get(slice.size() - 2);
+						
+						if (last2.pointTo(last1).resembles(last2.pointTo(v))) {
+							slice.remove(slice.size() - 1);
+						}
+					}
+					
 					slice.add(v);
 				}
 				
@@ -155,7 +170,7 @@ public class Game extends ApplicationAdapter {
 		
 		// Determine hollowness
 		ArrayList<Boolean> hollowness = new ArrayList<Boolean>();
-		
+
 		for (ArrayList<Vertex> slice : slices) {
 
 			// Determine if the slice is a "hollow" part or not
@@ -170,7 +185,7 @@ public class Game extends ApplicationAdapter {
 			}
 		}
 
-		// Render the solid slices after that
+		// Render the hollow slices after that
 		for (int i = 0; i < slices.size(); ++i) {
 			if (hollowness.get(i)) {
 				earClipping(slices.get(i), true);
@@ -285,7 +300,7 @@ public class Game extends ApplicationAdapter {
 			if (foundEar) {
 				slice.remove(ear);
 			} else {
-				// System.out.println("Didn't find any ears");
+				// System.out.println("No ear found, " + sliceZ);
 				break;
 			}
 		}
@@ -293,7 +308,7 @@ public class Game extends ApplicationAdapter {
 
 	private boolean isHollow(ArrayList<Vertex> slice,
 			ArrayList<ArrayList<Vertex>> slices) {
-
+		
 		Vertex start = slice.get(0);
 		Vertex infinity = new Vertex(3e5f, 7e5f);
 		Line check = new Line(start, infinity);
