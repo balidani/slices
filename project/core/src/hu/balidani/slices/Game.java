@@ -28,11 +28,13 @@ public class Game extends ApplicationAdapter {
 	ArrayList<Face> faces;
 
 	float sliceZ, sliceMin, sliceMax, sliceSpeed;
+	
+	public static boolean debug = true;
 
 	@Override
 	public void create() {
 
-		String file = "umbrella.g3db";
+		String file = "mug.g3db";
 
 		// Load assets
 		assets = new AssetManager();
@@ -114,7 +116,7 @@ public class Game extends ApplicationAdapter {
 		for (Face face : faces) {
 
 			// Check if face is contained by any seen pair
-			// This should be much more efficient
+			// This should be much more efficiently implemented
 			boolean faceSeen = false;
 			for (FacePair facePair : facePairs) {
 				if (facePair.contains(face)) {
@@ -204,6 +206,7 @@ public class Game extends ApplicationAdapter {
 
 		for (int i : sliceMap.keySet()) {
 			for (ArrayList<Vertex> slice : sliceMap.get(i)) {
+				// renderOutline(slice);
 				earClipping(slice, (i % 2 != 0));
 			}
 		}
@@ -379,8 +382,9 @@ public class Game extends ApplicationAdapter {
 
 		return intersectionCount;
 	}
-
+	
 	public void renderOutline(ArrayList<Vertex> slice) {
+		
 		// Draw the frame for debugging
 		for (int i = 0; i < slice.size(); i++) {
 

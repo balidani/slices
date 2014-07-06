@@ -63,14 +63,19 @@ public class Face {
 				continue;
 			}
 			
-			if (face.intersectsZ(z)) {
-				
-				results.add(edge);
-				pairs.add(pair);
-				
-				face.findNeighbors(faces, z, pairs, results);
-				break;
+			if (!edge.intersectsZ(z)) {
+				continue;
 			}
+			
+			if (!face.intersectsZ(z)) {
+				continue;
+			}
+				
+			results.add(edge);
+			pairs.add(pair);
+			
+			face.findNeighbors(faces, z, pairs, results);
+			break;
 		}
 	}
 

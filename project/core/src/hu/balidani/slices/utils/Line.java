@@ -73,4 +73,9 @@ public class Line {
 		return new Vertex(x, y);
 	}
 
+	public boolean intersectsZ(float z) {
+
+		return (a.z > z && b.z < z) || (a.z < z && b.z > z);
+	}
+
 }
