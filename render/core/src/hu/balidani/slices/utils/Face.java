@@ -17,6 +17,7 @@ public class Face implements Serializable {
 	public Vertex b;
 	public Vertex c;
 
+	// z-order constructor
 	public Face(int id, Vertex a, Vertex b, Vertex c) {
 		
 		this.id = id;
@@ -30,8 +31,11 @@ public class Face implements Serializable {
 		}
 	}
 	
+	// Triangle constructor
 	public Face(Vertex a, Vertex b, Vertex c) {
-		this(0, a, b, c);
+		this.a = a;
+		this.b = b;
+		this.c = c;
 	}
 
 	/**
