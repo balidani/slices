@@ -7,6 +7,6 @@ import hu.balidani.slices.render.Renderer;
 public class DesktopRenderer {
 	public static void main (String[] args) {
 		LwjglApplicationConfiguration config = new LwjglApplicationConfiguration();
-		new LwjglApplication(new Renderer(args[0]), config);
+		new LwjglApplication(new Renderer("test.g3db"), config);
 	}
 }

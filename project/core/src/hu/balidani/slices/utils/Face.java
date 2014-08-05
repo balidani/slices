@@ -25,13 +25,16 @@ public class Face implements Serializable {
 		this.b = Face.mid(a, b, c);
 		this.c = Face.min(a, b, c);
 		
-		if (Math.abs(a.z - c.z) < 0.00001f) {
-			// This face is flat! -- should have been filtered
-		}
+		//if (Math.abs(a.z - c.z) < 0.00001f) {
+		//	// This face is flat! -- should have been filtered
+		//}
 	}
 	
 	public Face(Vertex a, Vertex b, Vertex c) {
-		this(0, a, b, c);
+		
+		this.a = a;
+		this.b = b;
+		this.c = c;
 	}
 
 	/**

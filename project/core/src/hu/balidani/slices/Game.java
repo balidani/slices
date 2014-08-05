@@ -23,14 +23,18 @@ public class Game extends ApplicationAdapter {
 
 	float time, speed;
 
+	String filename;
+	
+	public Game(String file) {
+		filename = file;
+	}
+	
 	@SuppressWarnings("unchecked")
 	@Override
 	public void create() {
 
-		String file = "orange_big.slc";
-
 		try {
-			FileHandle handle = Gdx.files.internal(file);
+			FileHandle handle = Gdx.files.internal(filename);
 			ObjectInputStream ois = new ObjectInputStream(handle.read());
 			allTriangles = (ArrayList<ArrayList<Triangle>>) ois.readObject();
 
